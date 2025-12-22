@@ -60,7 +60,7 @@ class LSTM_Model(nn.Module):
         print(f"Frozen: {freeze_embeddings}. Individual weights frozen selectively based on `unfreeze_ids` if provided.")
 
 
-    def forward(self, features, captions, teacher_forcing_ratio=0.5):
+    def forward(self, features, captions, teacher_forcing_ratio=1.0):
         """
         Args:
             features: (batch_size, 80, 4096) - Video features
@@ -72,7 +72,7 @@ class LSTM_Model(nn.Module):
         device = features.device
 
         # Project video features: (batch, 80, embed_dim)
-        video_embed = self.dropout(self.video_fc(features))
+        video_embed = self.video_fc(features)
 
         # Initialize hidden states (automatically zeros if not provided)
         # We need to maintain states across the loop
