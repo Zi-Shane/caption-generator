@@ -1,10 +1,9 @@
 
 import json
 import os
-import shutil
 import sys
 
-from vocabulary import Vocabulary
+from code.vocabulary import Vocabulary
 
 def verify_vocab():
     # Setup dummy data

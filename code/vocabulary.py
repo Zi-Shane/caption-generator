@@ -48,6 +48,7 @@ class Vocabulary:
                 self.rev_vocab[idx] = word
                 idx += 1
 
+        open('vocab.json', 'w').write(json.dumps(self.vocab))
         print(f"Vocabulary built with {len(self.vocab)} unique words (min_count={min_count}).")
 
     def load_word_vector(self, file_path, embed_dim=200):
