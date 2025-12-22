@@ -13,10 +13,7 @@ def split_training_data(original_label_file, output_train_file, output_val_file,
         split_ratio (float): The proportion of data to use for training (e.g., 0.8 for 80%).
         seed (int): Seed for random shuffling to ensure reproducibility.
 
-    Returns:
-        tuple: A tuple containing paths to the generated training and validation label files.
     """
-    print(f"Splitting data from {original_label_file}...")
     with open(original_label_file, 'r') as f:
         all_data = json.load(f)
 
@@ -38,5 +35,4 @@ def split_training_data(original_label_file, output_train_file, output_val_file,
     print(f"Successfully split data: {len(train_data)} for training, {len(val_data)} for validation.")
     print(f"Training labels saved to: {output_train_file}")
     print(f"Validation labels saved to: {output_val_file}")
-
-    return output_train_file, output_val_file
+    print("--------------------------------")

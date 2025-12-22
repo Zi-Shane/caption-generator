@@ -2,6 +2,7 @@ import json
 import re
 import numpy as np
 from tqdm import tqdm
+from collections import Counter
 
 class Vocabulary:
     def __init__(self):
@@ -19,7 +20,7 @@ class Vocabulary:
         sentence = re.sub(r'[^\w\s-]', '', sentence).lower() # Adjusted regex for wider char support, if needed
         return sentence.split()
 
-    def build_vocab(self, file_path):
+    def build_vocab(self, file_path, min_count=1):
         # Read data
         with open(file_path, 'r') as f:
             data = json.load(f)
@@ -34,15 +35,20 @@ class Vocabulary:
         self.rev_vocab = {0: '<PAD>', 1: '<BOS>', 2: '<EOS>', 3: '<UNK>'}
         idx = 4
 
-        # Build vocabulary from all captions
-        for caption in tqdm(all_captions, desc="Building vocabulary"):
+        # Count words first
+        counter = Counter()
+        for caption in tqdm(all_captions, desc="Counting words"):
             caption = self.tokenize(caption)
-            for word in caption:
-                if word not in self.vocab:
-                    self.vocab[word] = idx
-                    self.rev_vocab[idx] = word
-                    idx += 1
-        print(f"Vocabulary built with {len(self.vocab)} unique words.")
+            counter.update(caption)
+
+        # Build vocabulary
+        for word, count in counter.items():
+            if count >= min_count:
+                self.vocab[word] = idx
+                self.rev_vocab[idx] = word
+                idx += 1
+
+        print(f"Vocabulary built with {len(self.vocab)} unique words (min_count={min_count}).")
 
     def load_word_vector(self, file_path, embed_dim=200):
         # Initialize embedding matrix with zeros
