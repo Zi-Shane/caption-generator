@@ -20,7 +20,7 @@ class Vocabulary:
         sentence = re.sub(r'[^\w\s-]', '', sentence).lower() # Adjusted regex for wider char support, if needed
         return sentence.split()
 
-    def build_vocab(self, file_path, min_count=1):
+    def build_vocab(self, file_path, output_vocab_file, min_count=1):
         # Read data
         with open(file_path, 'r') as f:
             data = json.load(f)
@@ -48,8 +48,14 @@ class Vocabulary:
                 self.rev_vocab[idx] = word
                 idx += 1
 
-        open('vocab.json', 'w').write(json.dumps(self.vocab))
+        open(output_vocab_file, 'w').write(json.dumps(self.vocab))
         print(f"Vocabulary built with {len(self.vocab)} unique words (min_count={min_count}).")
+        print(f"Vocabulary saved to: {output_vocab_file}")
+
+    def load_vocab(self, file_path):
+        with open(file_path, 'r') as f:
+            self.vocab = json.load(f)
+        self.rev_vocab = {idx: word for word, idx in self.vocab.items()}
 
     def load_word_vector(self, file_path, embed_dim=200):
         # Initialize embedding matrix with zeros
@@ -90,3 +96,26 @@ class Vocabulary:
         print(f"Successfully loaded {len(found_words)} word vectors from {file_path}.")
         print(f"Initialized {[self.rev_vocab[i] for i in self.initialized_randomly]} words in vocabulary randomly.")
         print(f"Embedding matrix shape: {self.embedding_matrix.shape}")
+
+    def load_pretrained_embeddings(self, embedding_matrix, unfreeze_ids=None, freeze_embeddings=True):
+        """
+        Args:
+            embedding_matrix (np.array): A numpy array of shape (vocab_size, embed_dim)
+                                         containing the pre-trained word vectors.
+            unfreeze_ids (list): A list of integer indices for words
+                                                 that were initialized randomly and should NOT be frozen.
+            freeze_embeddings (bool): If True, the embedding layer weights will be frozen,
+                                      with exceptions for `unfreeze_ids`.
+        """
+        if embedding_matrix.shape != self.embedding.weight.shape:
+            raise ValueError(
+                f"Pre-trained embedding matrix shape {embedding_matrix.shape} "
+                f"does not match model embedding layer shape {self.embedding.weight.shape}."
+            )
+
+        self.embedding.weight = nn.Parameter(torch.tensor(embedding_matrix))
+        self.embedding.weight.requires_grad = freeze_embeddings
+
+        print(f"Loaded pre-trained embeddings of shape {embedding_matrix.shape}. ")
+        print(f"Frozen: {freeze_embeddings}. Individual weights frozen selectively based on `unfreeze_ids` if provided.")
+

@@ -2,7 +2,7 @@ import os
 import json
 import random
 
-def split_training_data(original_label_file, output_train_file, output_val_file, split_ratio=0.8, seed=42):
+def split_train_val(original_label_file, output_train_file, output_val_file, split_ratio=0.8, seed=42):
     """
     Splits the original training label file into training and validation sets.
 
