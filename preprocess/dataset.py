@@ -25,7 +25,7 @@ class VideoDataset(Dataset):
         # Tokenize and convert to indices
         tokens = self.vocabulary.tokenize(caption)
 
-        vocab = self.vocabulary.vocab
+        vocab = self.vocabulary.word_dict
         caption_indices = [vocab['<BOS>']] + \
                           [vocab.get(word, vocab['<UNK>']) for word in tokens] + \
                           [vocab['<EOS>']]

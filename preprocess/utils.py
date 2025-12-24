@@ -35,4 +35,3 @@ def split_train_val(original_label_file, output_train_file, output_val_file, spl
     print(f"Successfully split data: {len(train_data)} for training, {len(val_data)} for validation.")
     print(f"Training labels saved to: {output_train_file}")
     print(f"Validation labels saved to: {output_val_file}")
-    print("--------------------------------")

@@ -6,8 +6,8 @@ from collections import Counter
 
 class Vocabulary:
     def __init__(self):
-        self.vocab = {}  # word -> index
-        self.rev_vocab = {}  # index -> word
+        self.word_dict = {}  # word -> index
+        self.rev_word_dict = {}  # index -> word
         self.embedding_matrix = None # To store the loaded word embeddings
         self.initialized_randomly = None
         self.glove_sizes = 400000 # Number of Rows 
@@ -31,8 +31,8 @@ class Vocabulary:
             all_captions.extend(item['caption'])
 
         # Initialize with special tokens
-        self.vocab = {'<PAD>': 0, '<BOS>': 1, '<EOS>': 2, '<UNK>': 3}
-        self.rev_vocab = {0: '<PAD>', 1: '<BOS>', 2: '<EOS>', 3: '<UNK>'}
+        self.word_dict = {'<PAD>': 0, '<BOS>': 1, '<EOS>': 2, '<UNK>': 3}
+        self.rev_word_dict = {0: '<PAD>', 1: '<BOS>', 2: '<EOS>', 3: '<UNK>'}
         idx = 4
 
         # Count words first
@@ -44,23 +44,23 @@ class Vocabulary:
         # Build vocabulary
         for word, count in counter.items():
             if count >= min_count:
-                self.vocab[word] = idx
-                self.rev_vocab[idx] = word
+                self.word_dict[word] = idx
+                self.rev_word_dict[idx] = word
                 idx += 1
 
-        open(output_vocab_file, 'w').write(json.dumps(self.vocab))
-        print(f"Vocabulary built with {len(self.vocab)} unique words (min_count={min_count}).")
+        open(output_vocab_file, 'w').write(json.dumps(self.word_dict))
+        print(f"Vocabulary built with {len(self.word_dict)} unique words (min_count={min_count}).")
         print(f"Vocabulary saved to: {output_vocab_file}")
 
     def load_vocab(self, file_path):
         with open(file_path, 'r') as f:
-            self.vocab = json.load(f)
-        self.rev_vocab = {idx: word for word, idx in self.vocab.items()}
+            self.word_dict = json.load(f)
+        self.rev_word_dict = {idx: word for word, idx in self.word_dict.items()}
 
     def load_word_vector(self, file_path, embed_dim=200):
         # Initialize embedding matrix with zeros
         # Use np.zeros to ensure it's float32
-        self.embedding_matrix = np.zeros((len(self.vocab), embed_dim), dtype=np.float32)
+        self.embedding_matrix = np.zeros((len(self.word_dict), embed_dim), dtype=np.float32)
         found_words = set()
 
         with open(file_path, 'r', encoding='utf-8') as f:
@@ -81,41 +81,18 @@ class Vocabulary:
                     # print(f"Warning: Skipping word '{word}' due to non-numeric vector values.")
                     continue
 
-                if word in self.vocab:
-                    self.embedding_matrix[self.vocab[word]] = vector
+                if word in self.word_dict:
+                    self.embedding_matrix[self.word_dict[word]] = vector
                     found_words.add(word)
 
         # Handle words in our vocabulary that were not found in the pre-trained vectors
         self.initialized_randomly = [] # Reset for consistent behavior
-        for word, idx in self.vocab.items():
+        for word, idx in self.word_dict.items():
             if word not in found_words:
                 # Initialize unknown words with random uniform vectors, a common practice
                 self.embedding_matrix[idx] = np.random.uniform(-0.25, 0.25, embed_dim).astype(np.float32)
                 self.initialized_randomly.append(idx)
 
+        print(f"Initialized {[self.rev_word_dict[i] for i in self.initialized_randomly]} words in vocabulary randomly.")
         print(f"Successfully loaded {len(found_words)} word vectors from {file_path}.")
-        print(f"Initialized {[self.rev_vocab[i] for i in self.initialized_randomly]} words in vocabulary randomly.")
         print(f"Embedding matrix shape: {self.embedding_matrix.shape}")
-
-    def load_pretrained_embeddings(self, embedding_matrix, unfreeze_ids=None, freeze_embeddings=True):
-        """
-        Args:
-            embedding_matrix (np.array): A numpy array of shape (vocab_size, embed_dim)
-                                         containing the pre-trained word vectors.
-            unfreeze_ids (list): A list of integer indices for words
-                                                 that were initialized randomly and should NOT be frozen.
-            freeze_embeddings (bool): If True, the embedding layer weights will be frozen,
-                                      with exceptions for `unfreeze_ids`.
-        """
-        if embedding_matrix.shape != self.embedding.weight.shape:
-            raise ValueError(
-                f"Pre-trained embedding matrix shape {embedding_matrix.shape} "
-                f"does not match model embedding layer shape {self.embedding.weight.shape}."
-            )
-
-        self.embedding.weight = nn.Parameter(torch.tensor(embedding_matrix))
-        self.embedding.weight.requires_grad = freeze_embeddings
-
-        print(f"Loaded pre-trained embeddings of shape {embedding_matrix.shape}. ")
-        print(f"Frozen: {freeze_embeddings}. Individual weights frozen selectively based on `unfreeze_ids` if provided.")
-
