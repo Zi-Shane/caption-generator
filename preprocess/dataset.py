@@ -38,4 +38,4 @@ class VideoDataset(Dataset):
             # Return a zero tensor of correct shape if loading fails (safety fallback)
             feat = np.zeros((80, 4096))
 
-        return torch.tensor(feat, dtype=torch.float32), torch.tensor(caption_indices, dtype=torch.long)
+        return torch.tensor(feat, dtype=torch.float32), torch.tensor(caption_indices, dtype=torch.long), video_id
