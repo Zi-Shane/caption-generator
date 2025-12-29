@@ -1,5 +1,6 @@
 import json
 import re
+import nltk
 import numpy as np
 from tqdm import tqdm
 from collections import Counter
@@ -17,8 +18,7 @@ class Vocabulary:
         Helper function to tokenize a sentence.
         Converts to lowercase, removes punctuation, and splits by space.
         """
-        sentence = re.sub(r'[^\w\s-]', '', sentence).lower() # Adjusted regex for wider char support, if needed
-        return sentence.split()
+        return nltk.word_tokenize(sentence.lower())
 
     def build_vocab(self, file_path, output_vocab_file, min_count=1):
         # Read data
