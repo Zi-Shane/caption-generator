@@ -7,11 +7,14 @@ from torch.utils.data import Dataset
 import torch
 
 class VideoDataset(Dataset):
-    def __init__(self, label_file, feat_dir, vocabulary):
+    def __init__(self, label_file, feat_dir, vocabulary, max_len=40):
         self.feat_dir = feat_dir
         self.vocabulary = vocabulary
         with open(label_file, 'r') as f:
             self.id_and_labels = json.load(f)
+        # We need a map for fast lookup of captions by video_id during validation
+        # self.val_dataset.training_labels is a list, so we build a dict here.
+        self.captions_map = {item['id']: item['caption'] for item in self.id_and_labels}
 
     def __len__(self):
         return len(self.id_and_labels)
@@ -31,6 +34,9 @@ class VideoDataset(Dataset):
                           [vocab.get(word, vocab['<UNK>']) for word in tokens] + \
                           [vocab['<EOS>']]
 
+        # Truncate or pad to max_len
+        caption_indices = caption_indices[:max_len] + [vocab['<PAD>']] * (max_len - len(caption_indices))
+
         filename = os.path.join(self.feat_dir, video_id + ".npy")
         try:
             feat = np.load(filename)
@@ -41,7 +47,8 @@ class VideoDataset(Dataset):
 
         return torch.tensor(feat, dtype=torch.float32), torch.tensor(caption_indices, dtype=torch.long), video_id
 
-    def collate_fn(self, batch):
+    @staticmethod
+    def collate_fn(batch):
         # Pad captions to the maximum length in the batch
         # Features are assumed to be of fixed size (80, 4096)
         features = torch.stack([item[0] for item in batch])
