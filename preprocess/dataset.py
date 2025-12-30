@@ -36,7 +36,7 @@ class VideoDataset(Dataset):
                           [vocab['<EOS>']]
 
         # Truncate or pad to max_len
-        caption_indices = caption_indices[:max_len] + [vocab['<PAD>']] * (max_len - len(caption_indices))
+        caption_indices = caption_indices[:self.max_len] + [vocab['<PAD>']] * (self.max_len - len(caption_indices))
 
         filename = os.path.join(self.feat_dir, video_id + ".npy")
         try:
