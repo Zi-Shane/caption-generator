@@ -10,6 +10,7 @@ class VideoDataset(Dataset):
     def __init__(self, label_file, feat_dir, vocabulary, max_len=40):
         self.feat_dir = feat_dir
         self.vocabulary = vocabulary
+        self.max_len = max_len
         with open(label_file, 'r') as f:
             self.id_and_labels = json.load(f)
         # We need a map for fast lookup of captions by video_id during validation
