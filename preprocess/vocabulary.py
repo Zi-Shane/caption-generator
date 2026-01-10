@@ -87,12 +87,27 @@ class Vocabulary:
 
         # Handle words in our vocabulary that were not found in the pre-trained vectors
         self.initialized_randomly = [] # Reset for consistent behavior
+
+        # Calculate statistics of loaded vectors for better initialization
+        if len(found_words) > 0:
+            # Get the vectors that were actually loaded
+            # Note: We can iterate and mask, or easier: just gather them
+            loaded_indices = [self.word_dict[w] for w in found_words]
+            loaded_vectors = self.embedding_matrix[loaded_indices]
+            
+            emb_mean = np.mean(loaded_vectors, axis=0)
+            emb_std = np.std(loaded_vectors, axis=0)
+        else:
+            # Fallback if no words found (unlikely)
+            emb_mean = np.zeros(embed_dim)
+            emb_std = np.ones(embed_dim) * 0.1
+
         for word, idx in self.word_dict.items():
             if word not in found_words:
-                # Initialize unknown words with random uniform vectors, a common practice
-                self.embedding_matrix[idx] = np.random.uniform(-0.25, 0.25, embed_dim).astype(np.float32)
+                # Initialize unknown words with normal distribution matching pretrained stats
+                self.embedding_matrix[idx] = np.random.normal(emb_mean, emb_std).astype(np.float32)
                 self.initialized_randomly.append(idx)
 
-        print(f"Initialized {[self.rev_word_dict[i] for i in self.initialized_randomly]} words in vocabulary randomly.")
+        print(f"Initialized {[self.rev_word_dict[i] for i in self.initialized_randomly]} words in vocabulary using pretrained stats.")
         print(f"Successfully loaded {len(found_words)} word vectors from {file_path}.")
         print(f"Embedding matrix shape: {self.embedding_matrix.shape}")
